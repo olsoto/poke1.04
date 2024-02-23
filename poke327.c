@@ -37,6 +37,7 @@ typedef int16_t pair_t[num_dims];
 #define BOULDER_PROB       95
 #define WORLD_SIZE         401
 #define DEFAULT_NPC_NUM    10
+#define MAX_NPC_NUM        100
 
 #define MOUNTAIN_SYMBOL       '%'
 #define BOULDER_SYMBOL        '0'
@@ -57,6 +58,7 @@ typedef int16_t pair_t[num_dims];
 #define mapxy(x, y) (m->map[y][x])
 #define heightpair(pair) (m->height[pair[dim_y]][pair[dim_x]])
 #define heightxy(x, y) (m->height[y][x])
+#define npc_total
 
 typedef enum __attribute__ ((__packed__)) terrain_type {
   ter_boulder,
@@ -83,7 +85,7 @@ typedef enum __attribute__ ((__packed__)) character_type {
   char_wanderer,
   char_sentry,
   char_explorer,
-  char_other,
+  //char_other,
   num_character_types
 } character_type_t;
 
@@ -105,7 +107,8 @@ typedef struct queue_node {
 typedef struct npc{
   pair_t pos;
   character_type_t type;
-
+  char symbol;
+  map_t map;
 } npc_t;
 
 typedef struct world {
@@ -116,6 +119,7 @@ typedef struct world {
    * we only need one pair at any given time.     */
   int hiker_dist[MAP_Y][MAP_X];
   int rival_dist[MAP_Y][MAP_X];
+  npc_t npcs[MAX_NPC_NUM];
   pc_t pc;
 } world_t;
 
@@ -1256,12 +1260,60 @@ void print_rival_dist()
   }
 }
 
-void generate_npc(character_type_t type){
-
+void generate_npc(character_type_t type, npc_t *npc){
+  
+  npc->type = type;
+  switch ((int)type){
+    case 0:
+      //printf("PC");
+      npc->symbol = '@';
+      break;
+    case 1:
+      //printf("Hiker");
+      npc->symbol = 'h';
+      break;
+    case 2:
+      //printf("Rival");
+      npc->symbol = 'r';
+      break;
+    case 3:
+      //printf("Pacer");
+      npc->symbol = 'p';
+      break;
+    case 4:
+      //printf("Wanderer");
+      npc->symbol = 'w';
+      break;
+    case 5:
+      //printf("Sentry");
+      npc->symbol = 's';
+      break;
+    case 6:
+      //printf("Explorer");
+      npc->symbol = 'e';
+      break;
+  }
+  //npc->map = world.cur_idx
+  // put npc on a new map location
+  // set npc position
 }
 
 void generate_all_npcs(int n){
-  
+  int hiker_gen = 0;
+  int rival_gen = 0;
+  for (int i = 0; i < n; i++){
+    npc_t npc;
+    if (rival_gen == 0 && n > 1){
+      generate_npc(char_rival, &npc);
+      rival_gen = 1;
+    }else if (hiker_gen == 0 && n > 1){
+      generate_npc(char_hiker, &npc);
+      hiker_gen = 1;
+    }else{
+      int ran = (rand() % num_character_types) + 1;
+      generate_npc((character_type_t)ran, &npc);
+    }
+  }
 }
 
 int main(int argc, char *argv[])
