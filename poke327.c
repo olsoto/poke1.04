@@ -1284,6 +1284,7 @@ void print_rival_dist()
 
 
 void print_npc_map(){
+
   for(int y = 0; y < MAP_Y; y++){
     printf("\n");
     for(int x = 0; x < MAP_X; x++){
@@ -1362,6 +1363,7 @@ void generate_all_npcs(int n){
       generate_npc((character_type_t)ran);
     }
   }
+  printf("\nGenerated %d trainers in this world\n", n);
   print_npc_map();
 }
 
@@ -1369,10 +1371,20 @@ int main(int argc, char *argv[])
 {
   struct timeval tv;
   uint32_t seed;
-  char *s = malloc(15);
-  int numNpcs = 2;
+  //char *s = malloc(15);
+  int numNpcs = DEFAULT_NPC_NUM;
   char c;
   int x, y;
+
+  for (int i = 0; i < argc; i++){
+    if (strcmp(argv[i], "--numTrainers") == 0 && i + 1 < argc){
+      if (sscanf(argv[i + 1], "%d", &numNpcs) == 1) {
+         
+      }else{
+          printf("Invalid argument after --numTrainers\n");
+      }
+    }
+  }
 
   if (argc == 2) {
     seed = atoi(argv[1]);
@@ -1386,8 +1398,10 @@ int main(int argc, char *argv[])
 
   init_world();
   init_pc();
+ 
   pathfind(world.cur_map);
-
+ generate_all_npcs(numNpcs);
+ 
   print_map();
   //print_hiker_dist();
   //print_rival_dist();
@@ -1452,7 +1466,7 @@ int main(int argc, char *argv[])
         new_map();
       }
       break;
-    case '-':
+    /*case '-':
       if (scanf("%s %d", s, &numNpcs) == 2) {
         if (strcmp(s,  "-numTrainers") == 0 && numNpcs > 0){
           generate_all_npcs(numNpcs);
@@ -1462,9 +1476,9 @@ int main(int argc, char *argv[])
           generate_all_npcs(numNpcs);
           printf("Generated %d trainers in this world\n", numNpcs);
         }
-      }
+      
       //THIS BREAKS IF INCORRECT INPUT IS PUT
-      break;
+      break;*/
     case '?':
     case 'h':
       printf("Move with 'e'ast, 'w'est, 'n'orth, 's'outh or 'f'ly x y.\n"
