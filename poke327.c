@@ -887,6 +887,7 @@ static int new_map()
   for (int y = 0; y < MAP_Y; y++){
     for (int x = 0; x < MAP_X; x++){
        world.cur_map->npcMap[y][x].type = -1;
+       world.cur_map->npcMap[y][x].symbol = ' ';
     }
   }
  
@@ -1281,25 +1282,23 @@ void print_rival_dist()
   }
 }
 
-/*
+
 void print_npc_map(){
   for(int y = 0; y < MAP_Y; y++){
+    printf("\n");
     for(int x = 0; x < MAP_X; x++){
-        if (!world.cur_map->npcMap[y][x]){
-          printf("0 ");
-        }else{
-          printf("%d ", world.cur_map->npcMap[y][x]);
-        }
+          
+          putchar(world.cur_map->npcMap[y][x].symbol);
     }
   }
 }
-*/
+
 
 void generate_npc(character_type_t type){
   npc_t npc;
   pair_t coords;
-  coords[dim_x] = rand() % (MAP_X-1) + 2;
-  coords[dim_y] = rand() % (MAP_Y-1) + 2;
+  coords[dim_x] = rand() % (MAP_X-2) + 1;
+  coords[dim_y] = rand() % (MAP_Y-2) + 1;
 
   npc.type = type;
   switch ((int)type){
@@ -1333,10 +1332,10 @@ void generate_npc(character_type_t type){
       break;
   }
 
-  while ((world.cur_map->npcMap[coords[dim_y]][coords[dim_x]].type)
-          && (move_cost[type][world.cur_map->map[coords[dim_y]][coords[dim_x]]] == DIJKSTRA_PATH_MAX)){
-      coords[dim_x] = rand() % (MAP_X-1) + 2;
-      coords[dim_y] = rand() % (MAP_Y-1) + 2;
+  while (/*(world.cur_map->npcMap[coords[dim_y]][coords[dim_x]].type)
+          && */(move_cost[type][world.cur_map->map[coords[dim_y]][coords[dim_x]]] > 1000)){
+      coords[dim_x] = rand() % (MAP_X-2) + 1;
+      coords[dim_y] = rand() % (MAP_Y-2) + 1;
   }
 
   npc.pos[dim_x] = coords[dim_x];
@@ -1359,10 +1358,11 @@ void generate_all_npcs(int n){
       generate_npc(char_hiker);
       hiker_gen = 1;
     }else{
-      int ran = 1 + (rand() % num_character_types - 1);
+      int ran = 1 + (rand() % (num_character_types - 1));
       generate_npc((character_type_t)ran);
     }
   }
+  print_npc_map();
 }
 
 int main(int argc, char *argv[])
