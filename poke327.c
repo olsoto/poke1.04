@@ -1236,52 +1236,6 @@ void pathfind(map_t *m)
   heap_delete(&h);
 }
 
-void init_pc()
-{
-  int x, y;
-
-  do {
-    x = rand() % (MAP_X - 2) + 1;
-    y = rand() % (MAP_Y - 2) + 1;
-  } while (world.cur_map->map[y][x] != ter_path);
-
-  world.pc.pos[dim_x] = x;
-  world.pc.pos[dim_y] = y;
-}
-
-void print_hiker_dist()
-{
-  int x, y;
-
-  for (y = 0; y < MAP_Y; y++) {
-    for (x = 0; x < MAP_X; x++) {
-      if (world.hiker_dist[y][x] == DIJKSTRA_PATH_MAX) {
-        printf("   ");
-      } else {
-        printf(" %02d", world.hiker_dist[y][x] % 100);
-      }
-    }
-    printf("\n");
-  }
-}
-
-void print_rival_dist()
-{
-  int x, y;
-
-  for (y = 0; y < MAP_Y; y++) {
-    for (x = 0; x < MAP_X; x++) {
-      if (world.rival_dist[y][x] == DIJKSTRA_PATH_MAX ||
-          world.rival_dist[y][x] < 0) {
-        printf("   ");
-      } else {
-        printf(" %02d", world.rival_dist[y][x] % 100);
-      }
-    }
-    printf("\n");
-  }
-}
-
 
 void print_npc_map(){
 
@@ -1339,8 +1293,14 @@ void generate_npc(character_type_t type){
       coords[dim_y] = rand() % (MAP_Y-2) + 1;
   }
 
-  npc.pos[dim_x] = coords[dim_x];
-  npc.pos[dim_y] = coords[dim_y];
+  if (type != char_pc){
+    npc.pos[dim_x] = coords[dim_x];
+    npc.pos[dim_y] = coords[dim_y];
+  }else{
+    npc.pos[dim_x] = world.pc.pos[dim_x];
+    npc.pos[dim_y] = world.pc.pos[dim_y];
+  }
+
 
   world.cur_map->npcMap[coords[dim_y]][coords[dim_x]] = npc;
 
@@ -1366,6 +1326,54 @@ void generate_all_npcs(int n){
   printf("\nGenerated %d trainers in this world\n", n);
   print_npc_map();
 }
+
+void init_pc()
+{
+  int x, y;
+
+  do {
+    x = rand() % (MAP_X - 2) + 1;
+    y = rand() % (MAP_Y - 2) + 1;
+  } while (world.cur_map->map[y][x] != ter_path);
+
+  world.pc.pos[dim_x] = x;
+  world.pc.pos[dim_y] = y;
+  generate_npc(char_pc);
+}
+
+void print_hiker_dist()
+{
+  int x, y;
+
+  for (y = 0; y < MAP_Y; y++) {
+    for (x = 0; x < MAP_X; x++) {
+      if (world.hiker_dist[y][x] == DIJKSTRA_PATH_MAX) {
+        printf("   ");
+      } else {
+        printf(" %02d", world.hiker_dist[y][x] % 100);
+      }
+    }
+    printf("\n");
+  }
+}
+
+void print_rival_dist()
+{
+  int x, y;
+
+  for (y = 0; y < MAP_Y; y++) {
+    for (x = 0; x < MAP_X; x++) {
+      if (world.rival_dist[y][x] == DIJKSTRA_PATH_MAX ||
+          world.rival_dist[y][x] < 0) {
+        printf("   ");
+      } else {
+        printf(" %02d", world.rival_dist[y][x] % 100);
+      }
+    }
+    printf("\n");
+  }
+}
+
 
 int main(int argc, char *argv[])
 {
