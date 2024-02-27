@@ -89,14 +89,24 @@ typedef enum __attribute__ ((__packed__)) character_type {
   num_character_types
 } character_type_t;
 
+typedef struct npc{
+  pair_t pos;
+  character_type_t type;
+  char symbol;
+  //costmap[][]
+  
+} npc_t;
+
 typedef struct pc {
   pair_t pos;
 } pc_t;
+
 
 typedef struct map {
   terrain_type_t map[MAP_Y][MAP_X];
   uint8_t height[MAP_Y][MAP_X];
   int8_t n, s, e, w;
+  npc_t npcMap[MAP_Y][MAP_X];
 } map_t;
 
 typedef struct queue_node {
@@ -104,12 +114,7 @@ typedef struct queue_node {
   struct queue_node *next;
 } queue_node_t;
 
-typedef struct npc{
-  pair_t pos;
-  character_type_t type;
-  char symbol;
-  map_t map;
-} npc_t;
+
 
 typedef struct world {
   map_t *world[WORLD_SIZE][WORLD_SIZE];
@@ -119,7 +124,6 @@ typedef struct world {
    * we only need one pair at any given time.     */
   int hiker_dist[MAP_Y][MAP_X];
   int rival_dist[MAP_Y][MAP_X];
-  npc_t npcs[MAX_NPC_NUM];
   pc_t pc;
 } world_t;
 
@@ -134,7 +138,10 @@ int32_t move_cost[num_character_types][num_terrain_types] = {
   { IM, IM, 10, 10, 10, 20, 10, IM, IM, IM, 10 },
   { IM, IM, 10, 50, 50, 15, 10, 15, 15, IM, IM },
   { IM, IM, 10, 50, 50, 20, 10, IM, IM, IM, IM },
-  { IM, IM, IM, IM, IM, IM, IM, IM, IM,  7, IM },
+  { IM, IM, 10, 50, 50, 20, 10, IM, IM,  IM, IM },
+  { IM, IM, 10, 50, 50, 20, 10, IM, IM,  IM, IM },
+  { IM, IM, 10, 50, 50, 20, 10, IM, IM,  IM, IM },
+  { IM, IM, 10, 50, 50, 20, 10, IM, IM,  IM, IM },
 };
 #undef IM
 
@@ -876,8 +883,16 @@ static int new_map()
     e = 1 + rand() % (MAP_Y - 2);
   }
   
+  
+  for (int y = 0; y < MAP_Y; y++){
+    for (int x = 0; x < MAP_X; x++){
+       world.cur_map->npcMap[y][x].type = -1;
+    }
+  }
+ 
+
   map_terrain(world.cur_map, n, s, e, w);
-     
+  
   place_boulders(world.cur_map);
   place_trees(world.cur_map);
   build_paths(world.cur_map);
@@ -907,7 +922,13 @@ static void print_map()
       if (world.pc.pos[dim_y] == y &&
           world.pc.pos[dim_x] == x) {
         putchar('@');
-      } else {
+      }else if (world.cur_map->npcMap[y][x].pos &&
+           world.cur_map->npcMap[y][x].symbol &&
+           world.cur_map->npcMap[y][x].type >= 0 &&
+           world.cur_map->npcMap[y][x].type < num_character_types){
+        npc_t npc = world.cur_map->npcMap[y][x];
+        putchar(npc.symbol);
+      }else {
         switch (world.cur_map->map[y][x]) {
         case ter_boulder:
           putchar(BOULDER_SYMBOL);
@@ -1260,40 +1281,69 @@ void print_rival_dist()
   }
 }
 
-void generate_npc(character_type_t type, npc_t *npc){
-  
-  npc->type = type;
+/*
+void print_npc_map(){
+  for(int y = 0; y < MAP_Y; y++){
+    for(int x = 0; x < MAP_X; x++){
+        if (!world.cur_map->npcMap[y][x]){
+          printf("0 ");
+        }else{
+          printf("%d ", world.cur_map->npcMap[y][x]);
+        }
+    }
+  }
+}
+*/
+
+void generate_npc(character_type_t type){
+  npc_t npc;
+  pair_t coords;
+  coords[dim_x] = rand() % (MAP_X-1) + 2;
+  coords[dim_y] = rand() % (MAP_Y-1) + 2;
+
+  npc.type = type;
   switch ((int)type){
     case 0:
       //printf("PC");
-      npc->symbol = '@';
+      npc.symbol = '@';
       break;
     case 1:
       //printf("Hiker");
-      npc->symbol = 'h';
+      npc.symbol = 'h';
       break;
     case 2:
       //printf("Rival");
-      npc->symbol = 'r';
+      npc.symbol = 'r';
       break;
     case 3:
       //printf("Pacer");
-      npc->symbol = 'p';
+      npc.symbol = 'p';
       break;
     case 4:
       //printf("Wanderer");
-      npc->symbol = 'w';
+      npc.symbol = 'w';
       break;
     case 5:
       //printf("Sentry");
-      npc->symbol = 's';
+      npc.symbol = 's';
       break;
     case 6:
       //printf("Explorer");
-      npc->symbol = 'e';
+      npc.symbol = 'e';
       break;
   }
-  //npc->map = world.cur_idx
+
+  while ((world.cur_map->npcMap[coords[dim_y]][coords[dim_x]].type)
+          && (move_cost[type][world.cur_map->map[coords[dim_y]][coords[dim_x]]] == DIJKSTRA_PATH_MAX)){
+      coords[dim_x] = rand() % (MAP_X-1) + 2;
+      coords[dim_y] = rand() % (MAP_Y-1) + 2;
+  }
+
+  npc.pos[dim_x] = coords[dim_x];
+  npc.pos[dim_y] = coords[dim_y];
+
+  world.cur_map->npcMap[coords[dim_y]][coords[dim_x]] = npc;
+
   // put npc on a new map location
   // set npc position
 }
@@ -1302,16 +1352,15 @@ void generate_all_npcs(int n){
   int hiker_gen = 0;
   int rival_gen = 0;
   for (int i = 0; i < n; i++){
-    npc_t npc;
     if (rival_gen == 0 && n > 1){
-      generate_npc(char_rival, &npc);
+      generate_npc(char_rival);
       rival_gen = 1;
     }else if (hiker_gen == 0 && n > 1){
-      generate_npc(char_hiker, &npc);
+      generate_npc(char_hiker);
       hiker_gen = 1;
     }else{
-      int ran = (rand() % num_character_types) + 1;
-      generate_npc((character_type_t)ran, &npc);
+      int ran = 1 + (rand() % num_character_types - 1);
+      generate_npc((character_type_t)ran);
     }
   }
 }
