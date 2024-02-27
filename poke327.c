@@ -1333,8 +1333,8 @@ void generate_npc(character_type_t type){
       break;
   }
 
-  while (/*(world.cur_map->npcMap[coords[dim_y]][coords[dim_x]].type)
-          && */(move_cost[type][world.cur_map->map[coords[dim_y]][coords[dim_x]]] > 1000)){
+  while ((world.cur_map->npcMap[coords[dim_y]][coords[dim_x]].type > -1)
+          && (move_cost[type][world.cur_map->map[coords[dim_y]][coords[dim_x]]] > 1000)){
       coords[dim_x] = rand() % (MAP_X-2) + 1;
       coords[dim_y] = rand() % (MAP_Y-2) + 1;
   }
